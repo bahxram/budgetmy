@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Büdcəm</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#F0EFE9;--card:#FFFFFF;--dark:#1C1C1E;--dark2:#2C2C2E;
+  --muted:#8E8E93;--border:rgba(0,0,0,0.07);
+  --blue:#3478F6;--green:#30D158;--red:#FF3B30;--amber:#FF9F0A;--purple:#BF5AF2;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Onest',sans-serif;background:var(--bg);color:var(--dark);display:flex;flex-direction:column;height:100vh;max-height:100dvh;}
+.header{background:var(--card);padding:14px 18px 12px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.header-title{font-size:17px;font-weight:600;color:var(--dark);}
+.header-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.header-btn{width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;}
+.view{display:none;flex-direction:column;flex:1;overflow:hidden;}
+.view.active{display:flex;}
+.scroll-area{flex:1;overflow-y:auto;padding:14px 16px;-webkit-overflow-scrolling:touch;}
+.scroll-area::-webkit-scrollbar{display:none;}
+.balance-card{background:var(--dark);border-radius:20px;padding:18px 20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.bal-left .lbl{font-size:11px;color:#888;margin-bottom:5px;}
+.bal-left .amount{font-size:30px;font-weight:600;color:#fff;letter-spacing:-0.5px;}
+.bal-left .sub{font-size:11px;color:#666;margin-top:3px;}
+.bal-icon{width:48px;height:48px;background:rgba(255,255,255,0.08);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.period-tabs{display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:12px;padding:3px;}
+.period-tab{flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:500;text-align:center;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.period-tab.active{background:var(--card);color:var(--dark);box-shadow:0 1px 4px rgba(0,0,0,0.1);}
+.donut-card{background:var(--dark2);border-radius:20px;padding:16px 18px;margin-bottom:12px;}
+.donut-title{font-size:11px;color:#777;margin-bottom:12px;font-weight:500;letter-spacing:0.3px;}
+.donut-row{display:flex;align-items:center;gap:16px;}
+.donut-wrap{position:relative;width:88px;height:88px;flex-shrink:0;}
+.donut-wrap svg{width:88px;height:88px;transform:rotate(-90deg);}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.dc-num{font-size:18px;font-weight:600;color:#fff;}
+.dc-lbl{font-size:9px;color:#666;}
+.legend{flex:1;display:flex;flex-direction:column;gap:7px;}
+.legend-item{display:flex;align-items:center;gap:8px;}
+.legend-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.legend-name{font-size:12px;color:#bbb;flex:1;}
+.legend-pct{font-size:11px;font-weight:500;color:#fff;}
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.sec-lbl{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:0.2px;}
+.sec-btn{font-size:11px;color:var(--blue);cursor:pointer;border:0.5px solid var(--blue);border-radius:20px;padding:4px 11px;background:transparent;font-weight:500;}
+.cat-card{background:var(--card);border-radius:16px;padding:13px 14px;margin-bottom:9px;border:0.5px solid var(--border);transition:transform 0.1s;position:relative;overflow:hidden;}
+.cat-card:active{transform:scale(0.985);}
+.cat-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+.cat-info{display:flex;align-items:center;gap:10px;}
+.cat-emoji{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.cat-name{font-size:14px;font-weight:500;color:var(--dark);}
+.cat-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.cat-amount{font-size:15px;font-weight:600;color:var(--dark);}
+.cat-del{position:absolute;right:12px;top:12px;width:22px;height:22px;border-radius:50%;background:#ffecec;border:none;color:var(--red);font-size:15px;cursor:pointer;display:none;align-items:center;justify-content:center;}
+.cat-card.edit-mode .cat-del{display:flex;}
+.cat-card.edit-mode .cat-amount{visibility:hidden;}
+.prog-bg{height:4px;background:#f0f0f0;border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;transition:width 0.5s;}
+.prog-row{display:flex;justify-content:space-between;margin-top:5px;}
+.prog-l,.prog-r{font-size:10px;color:var(--muted);}
+.txn-item{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;border:0.5px solid var(--border);}
+.txn-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.txn-info{flex:1;min-width:0;}
+.txn-name{font-size:13px;font-weight:500;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.txn-cat{font-size:11px;color:var(--muted);margin-top:1px;}
+.txn-amt{font-size:14px;font-weight:600;flex-shrink:0;}
+.txn-amt.exp{color:var(--red);}
+.txn-amt.inc{color:var(--green);}
+.ins-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.ins-card{background:var(--card);border-radius:16px;padding:14px;border:0.5px solid var(--border);}
+.ins-lbl{font-size:11px;color:var(--muted);margin-bottom:5px;}
+.ins-val{font-size:20px;font-weight:600;color:var(--dark);letter-spacing:-0.3px;}
+.ins-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.bar-section{background:var(--card);border-radius:16px;padding:14px 16px;border:0.5px solid var(--border);}
+.bar-title{font-size:12px;color:var(--muted);margin-bottom:12px;font-weight:500;}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.bar-lbl{font-size:11px;color:var(--dark);width:80px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-bg{flex:1;height:7px;background:#f0f0f0;border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.5s;}
+.bar-val{font-size:10px;color:var(--muted);width:50px;text-align:right;}
+.settings-section{background:var(--card);border-radius:16px;overflow:hidden;border:0.5px solid var(--border);margin-bottom:12px;}
+.settings-row{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:0.5px solid var(--border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-icon{font-size:18px;width:28px;text-align:center;}
+.settings-text{flex:1;}
+.settings-label{font-size:14px;font-weight:500;color:var(--dark);}
+.settings-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.settings-input{border:none;background:transparent;font-size:15px;font-weight:500;color:var(--blue);text-align:right;width:100px;outline:none;font-family:'Onest',sans-serif;}
+.danger-row{padding:14px 16px;color:var(--red);font-size:14px;cursor:pointer;font-weight:500;}
+.bottom-nav{background:var(--card);border-top:0.5px solid var(--border);display:flex;align-items:center;padding:8px 4px 16px;flex-shrink:0;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer;padding:4px 0;border:none;background:transparent;transition:color 0.2s;font-family:'Onest',sans-serif;}
+.nav-item.active{color:var(--dark);}
+.nav-item .ni{font-size:20px;line-height:1;}
+.nav-add{width:46px;height:46px;background:var(--dark);border-radius:23px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;cursor:pointer;border:none;flex-shrink:0;margin:0 6px;transition:transform 0.15s;}
+.nav-add:active{transform:scale(0.93);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:flex-end;z-index:100;}
+.overlay.open{display:flex;}
+.modal{background:var(--card);border-radius:24px 24px 0 0;padding:6px 20px 30px;width:100%;max-height:90dvh;overflow-y:auto;}
+.modal::-webkit-scrollbar{display:none;}
+.handle{width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:10px auto 16px;}
+.modal-title{font-size:16px;font-weight:600;color:var(--dark);margin-bottom:16px;}
+.form-lbl{font-size:12px;color:var(--muted);margin-bottom:6px;display:block;font-weight:500;}
+.form-inp{width:100%;padding:12px 14px;border-radius:12px;border:0.5px solid rgba(0,0,0,0.12);font-size:15px;background:#fafafa;color:var(--dark);outline:none;font-family:'Onest',sans-serif;margin-bottom:14px;}
+.form-inp:focus{border-color:var(--blue);background:#fff;}
+.form-sel{width:100%;padding:12px 14px;border-radius:12px;border:0.5px solid rgba(0,0,0,0.12);font-size:15px;background:#fafafa;color:var(--dark);outline:none;font-family:'Onest',sans-serif;margin-bottom:14px;appearance:none;}
+.type-row{display:flex;gap:8px;margin-bottom:14px;}
+.type-btn{flex:1;padding:10px;border-radius:12px;font-size:13px;font-weight:500;cursor:pointer;border:0.5px solid rgba(0,0,0,0.1);background:#f5f5f5;color:#888;transition:all 0.2s;font-family:'Onest',sans-serif;}
+.type-btn.t-exp{background:#ffecec;color:var(--red);border-color:var(--red);}
+.type-btn.t-inc{background:#eafaf4;color:var(--green);border-color:var(--green);}
+.save-btn{width:100%;padding:14px;border-radius:14px;background:var(--dark);color:#fff;font-size:15px;font-weight:600;border:none;cursor:pointer;font-family:'Onest',sans-serif;margin-top:4px;}
+.save-btn:active{opacity:0.85;}
+.cancel-btn{width:100%;padding:10px;border:none;background:transparent;color:var(--muted);font-size:13px;margin-top:6px;cursor:pointer;font-family:'Onest',sans-serif;}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.emoji-opt{width:42px;height:42px;border-radius:11px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;}
+.emoji-opt.sel{border-color:var(--blue);background:#e8f2fd;}
+.color-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.color-opt{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.15s;}
+.color-opt.sel{border-color:var(--dark);transform:scale(1.2);}
+.empty{text-align:center;padding:40px 0;color:var(--muted);font-size:13px;}
+.empty-icon{font-size:36px;margin-bottom:8px;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all 0.3s;pointer-events:none;z-index:200;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.date-group{font-size:11px;color:var(--muted);font-weight:500;padding:6px 0 4px;letter-spacing:0.2px;}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="view active" id="v-home">
+  <div class="header">
+    <div>
+      <div class="header-title">Büdcəm 💼</div>
+      <div class="header-sub" id="hdr-date"></div>
+    </div>
+    <button class="header-btn" onclick="toggleEdit()" id="edit-btn">✏️</button>
+  </div>
+  <div class="scroll-area">
+    <div class="balance-card">
+      <div class="bal-left">
+        <div class="lbl">Cari balans</div>
+        <div class="amount" id="bal-amt">₼0</div>
+        <div class="sub" id="bal-sub">Xərc qeyd edin</div>
+      </div>
+      <div class="bal-icon">💰</div>
+    </div>
+    <div class="period-tabs">
+      <button class="period-tab active" onclick="setPeriod('ay',this)">Bu ay</button>
+      <button class="period-tab" onclick="setPeriod('həftə',this)">Həftə</button>
+      <button class="period-tab" onclick="setPeriod('gün',this)">Bu gün</button>
+    </div>
+    <div class="donut-card">
+      <div class="donut-title">XƏRCLƏRİN PAYLAMASI</div>
+      <div class="donut-row">
+        <div class="donut-wrap">
+          <svg viewBox="0 0 88 88" id="donut-svg"></svg>
+          <div class="donut-center"><div class="dc-num" id="d-num">0</div><div class="dc-lbl">xərc</div></div>
+        </div>
+        <div class="legend" id="d-legend"></div>
+      </div>
+    </div>
+    <div class="sec-hdr">
+      <span class="sec-lbl">KATEQORİYALAR</span>
+      <button class="sec-btn" onclick="openCatModal()">+ Yeni</button>
+    </div>
+    <div id="cat-list"></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="nav('home',this)"><span class="ni">🏠</span>Ana</button>
+    <button class="nav-item" onclick="nav('txns',this)"><span class="ni">📋</span>Tarixçə</button>
+    <button class="nav-add" onclick="openAddModal()">+</button>
+    <button class="nav-item" onclick="nav('ins',this)"><span class="ni">📊</span>Analiz</button>
+    <button class="nav-item" onclick="nav('set',this)"><span class="ni">⚙️</span>Parametr</button>
+  </div>
+</div>
+
+<!-- TRANSACTIONS -->
+<div class="view" id="v-txns">
+  <div class="header"><div class="header-title">Əməliyyatlar</div></div>
+  <div class="scroll-area" id="txn-list"></div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="nav('home',this)"><span class="ni">🏠</span>Ana</button>
+    <button class="nav-item active" onclick="nav('txns',this)"><span class="ni">📋</span>Tarixçə</button>
+    <button class="nav-add" onclick="openAddModal()">+</button>
+    <button class="nav-item" onclick="nav('ins',this)"><span class="ni">📊</span>Analiz</button>
+    <button class="nav-item" onclick="nav('set',this)"><span class="ni">⚙️</span>Parametr</button>
+  </div>
+</div>
+
+<!-- INSIGHTS -->
+<div class="view" id="v-ins">
+  <div class="header"><div class="header-title">Analiz 📊</div></div>
+  <div class="scroll-area">
+    <div class="ins-grid">
+      <div class="ins-card"><div class="ins-lbl">Bu ayki xərc</div><div class="ins-val" id="ins-exp">₼0</div><div class="ins-sub" id="ins-exp-cnt">0 əməliyyat</div></div>
+      <div class="ins-card"><div class="ins-lbl">Bu ayki gəlir</div><div class="ins-val" id="ins-inc">₼0</div><div class="ins-sub" id="ins-inc-cnt">0 əməliyyat</div></div>
+      <div class="ins-card"><div class="ins-lbl">Orta gündəlik</div><div class="ins-val" id="ins-avg">₼0</div><div class="ins-sub">xərc</div></div>
+      <div class="ins-card"><div class="ins-lbl">Ən çox xərc</div><div class="ins-val" id="ins-top">—</div><div class="ins-sub" id="ins-top-amt"></div></div>
+    </div>
+    <div class="bar-section">
+      <div class="bar-title">KATEQORİYA ÜZRƏ</div>
+      <div id="ins-bars"></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="nav('home',this)"><span class="ni">🏠</span>Ana</button>
+    <button class="nav-item" onclick="nav('txns',this)"><span class="ni">📋</span>Tarixçə</button>
+    <button class="nav-add" onclick="openAddModal()">+</button>
+    <button class="nav-item active" onclick="nav('ins',this)"><span class="ni">📊</span>Analiz</button>
+    <button class="nav-item" onclick="nav('set',this)"><span class="ni">⚙️</span>Parametr</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="view" id="v-set">
+  <div class="header"><div class="header-title">Parametrlər</div></div>
+  <div class="scroll-area">
+    <div class="settings-section">
+      <div class="settings-row">
+        <span class="settings-icon">💵</span>
+        <div class="settings-text"><div class="settings-label">Aylıq gəlir</div><div class="settings-sub">Balans hesablaması üçün</div></div>
+        <input type="number" class="settings-input" id="sal-inp" placeholder="0" onchange="saveSalary()">
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-row" onclick="exportData()" style="cursor:pointer;">
+        <span class="settings-icon">📤</span>
+        <div class="settings-text"><div class="settings-label">Məlumatları ixrac et</div><div class="settings-sub">JSON formatında yüklə</div></div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="danger-row" onclick="clearAll()">🗑️ Bütün məlumatları sil</div>
+    </div>
+    <div style="text-align:center;padding:20px 0;font-size:11px;color:var(--muted);">Büdcəm v1.0 · Məlumatlar cihazda saxlanır</div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="nav('home',this)"><span class="ni">🏠</span>Ana</button>
+    <button class="nav-item" onclick="nav('txns',this)"><span class="ni">📋</span>Tarixçə</button>
+    <button class="nav-add" onclick="openAddModal()">+</button>
+    <button class="nav-item" onclick="nav('ins',this)"><span class="ni">📊</span>Analiz</button>
+    <button class="nav-item active" onclick="nav('set',this)"><span class="ni">⚙️</span>Parametr</button>
+  </div>
+</div>
+
+<!-- ADD TXN MODAL -->
+<div class="overlay" id="m-add">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title">Əməliyyat əlavə et</div>
+    <div class="type-row">
+      <button class="type-btn t-exp" id="btn-exp" onclick="setType('xərc')">− Xərc</button>
+      <button class="type-btn" id="btn-inc" onclick="setType('gəlir')">+ Gəlir</button>
+    </div>
+    <label class="form-lbl">Məbləğ (₼)</label>
+    <input type="number" id="t-amt" class="form-inp" placeholder="0.00" inputmode="decimal">
+    <label class="form-lbl">Açıqlama</label>
+    <input type="text" id="t-desc" class="form-inp" placeholder="Nə üçün?">
+    <label class="form-lbl">Kateqoriya</label>
+    <select id="t-cat" class="form-sel"></select>
+    <button class="save-btn" onclick="saveTxn()">Saxla</button>
+    <button class="cancel-btn" onclick="closeM('m-add')">Ləğv et</button>
+  </div>
+</div>
+
+<!-- ADD CAT MODAL -->
+<div class="overlay" id="m-cat">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title">Yeni kateqoriya</div>
+    <label class="form-lbl">Ad</label>
+    <input type="text" id="c-name" class="form-inp" placeholder="Kateqoriya adı">
+    <label class="form-lbl">Büdcə limiti (₼)</label>
+    <input type="number" id="c-budget" class="form-inp" placeholder="0">
+    <label class="form-lbl">İkon seç</label>
+    <div class="emoji-grid" id="emoji-grid"></div>
+    <label class="form-lbl">Rəng seç</label>
+    <div class="color-grid" id="color-grid"></div>
+    <button class="save-btn" onclick="saveCat()">Yarat</button>
+    <button class="cancel-btn" onclick="closeM('m-cat')">Ləğv et</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const EMOJIS=['🏠','🍔','🚗','💊','🎓','👗','✈️','🎮','💆','📱','🛒','⚡','🏋️','🎬','☕','🐾','💼','🎁','🎵','🌿','🏖️','🍕','🍺','📚','💇','🏥','⛽','🛁'];
+const COLORS=['#3478F6','#30D158','#BF5AF2','#FF9F0A','#FF3B30','#FF6B9D','#5AC8FA','#34C759','#AF52DE','#FF6B00'];
+const MONTHS=['Yanvar','Fevral','Mart','Aprel','May','İyun','İyul','Avqust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
+const WDAYS=['Bazar','Bazar ertəsi','Çərşənbə axşamı','Çərşənbə','Cümə axşamı','Cümə','Şənbə'];
+
+let S={salary:0,cats:[],txns:[],type:'xərc',emoji:EMOJIS[0],color:COLORS[0],period:'ay',editMode:false};
+
+function load(){
+  try{const d=localStorage.getItem('budgetaz2');if(d)S={...S,...JSON.parse(d)};}catch(e){}
+  if(!S.cats.length){
+    S.cats=[
+      {id:1,name:'Qida',emoji:'🍔',color:'#30D158',budget:300},
+      {id:2,name:'Nəqliyyat',emoji:'🚗',color:'#3478F6',budget:150},
+      {id:3,name:'Əyləncə',emoji:'🎮',color:'#BF5AF2',budget:100},
+    ];save();
+  }
+}
+function save(){try{localStorage.setItem('budgetaz2',JSON.stringify(S));}catch(e){}}
+function fmt(n){return '₼'+parseFloat(n).toFixed(2);}
+function fmtDate(iso){
+  const d=new Date(iso);
+  return d.getDate()+' '+MONTHS[d.getMonth()]+', '+WDAYS[d.getDay()];
+}
+function filterTxns(period){
+  const now=new Date();
+  return S.txns.filter(t=>{
+    const td=new Date(t.date);
+    if(period==='gün')return td.toDateString()===now.toDateString();
+    if(period==='həftə')return(now-td)/864e5<=7;
+    return td.getMonth()===now.getMonth()&&td.getFullYear()===now.getFullYear();
+  });
+}
+function catSpend(cid,txns){return txns.filter(t=>t.catId===cid&&t.type==='xərc').reduce((s,t)=>s+t.amount,0);}
+function renderAll(){renderHome();renderTxns();renderIns();}
+
+function renderHome(){
+  const d=new Date();
+  const el=document.getElementById('hdr-date');
+  if(el)el.textContent=WDAYS[d.getDay()]+', '+d.getDate()+' '+MONTHS[d.getMonth()];
+  const txns=filterTxns(S.period);
+  const totalExp=txns.filter(t=>t.type==='xərc').reduce((s,t)=>s+t.amount,0);
+  const totalInc=txns.filter(t=>t.type==='gəlir').reduce((s,t)=>s+t.amount,0);
+  const bal=S.salary+totalInc-totalExp;
+  document.getElementById('bal-amt').textContent=fmt(bal);
+  document.getElementById('bal-sub').textContent='Xərc: '+fmt(totalExp)+' · Gəlir: '+fmt(S.salary+totalInc);
+  const svg=document.getElementById('donut-svg');
+  svg.innerHTML='';
+  const legend=document.getElementById('d-legend');
+  legend.innerHTML='';
+  document.getElementById('d-num').textContent=txns.filter(t=>t.type==='xərc').length;
+  const total=S.cats.reduce((s,c)=>s+catSpend(c.id,txns),0);
+  const r=34,cx=44,cy=44,circ=2*Math.PI*r;
+  if(total>0){
+    let off=0;
+    S.cats.forEach(c=>{
+      const sp=catSpend(c.id,txns);if(sp<=0)return;
+      const pct=sp/total,dash=pct*circ;
+      const el=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      el.setAttribute('cx',cx);el.setAttribute('cy',cy);el.setAttribute('r',r);
+      el.setAttribute('fill','none');el.setAttribute('stroke',c.color);el.setAttribute('stroke-width','15');
+      el.setAttribute('stroke-dasharray',dash+' '+(circ-dash));
+      el.setAttribute('stroke-dashoffset',-(off*circ)+(circ*0.25));
+      svg.appendChild(el);off+=pct;
+    });
+  }else{
+    const bg=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    bg.setAttribute('cx',cx);bg.setAttribute('cy',cy);bg.setAttribute('r',r);
+    bg.setAttribute('fill','none');bg.setAttribute('stroke','#2c2c2e');bg.setAttribute('stroke-width','15');
+    svg.appendChild(bg);
+  }
+  S.cats.slice(0,4).forEach(c=>{
+    const sp=catSpend(c.id,txns),pct=total>0?Math.round(sp/total*100):0;
+    const li=document.createElement('div');li.className='legend-item';
+    li.innerHTML='<div class="legend-dot" style="background:'+c.color+'"></div><span class="legend-name">'+c.name+'</span><span class="legend-pct">'+pct+'%</span>';
+    legend.appendChild(li);
+  });
+  if(!S.cats.length)legend.innerHTML='<div style="font-size:11px;color:#555">Kateqoriya yoxdur</div>';
+  const list=document.getElementById('cat-list');list.innerHTML='';
+  if(!S.cats.length){list.innerHTML='<div class="empty"><div class="empty-icon">📂</div>Kateqoriya yoxdur<br>+ Yeni düyməsinə basın</div>';return;}
+  S.cats.forEach(c=>{
+    const sp=catSpend(c.id,txns),pct=c.budget>0?Math.min(100,Math.round(sp/c.budget*100)):0;
+    const left=c.budget-sp,over=sp>c.budget&&c.budget>0;
+    const div=document.createElement('div');div.className='cat-card'+(S.editMode?' edit-mode':'');
+    div.innerHTML='<button class="cat-del" onclick="deleteCat('+c.id+',event)">×</button>'
+      +'<div class="cat-top"><div class="cat-info">'
+      +'<div class="cat-emoji" style="background:'+c.color+'20">'+c.emoji+'</div>'
+      +'<div><div class="cat-name">'+c.name+'</div>'
+      +'<div class="cat-sub">'+(c.budget>0?(pct+'% istifadə edilib'):'Limit yoxdur')+'</div></div></div>'
+      +'<div class="cat-amount">'+fmt(sp)+'</div></div>'
+      +(c.budget>0?'<div class="prog-bg"><div class="prog-fill" style="width:'+pct+'%;background:'+(over?'var(--red)':c.color)+'"></div></div>'
+      +'<div class="prog-row"><span class="prog-l">'+(over?'⚠️ Aşıldı '+fmt(sp-c.budget):fmt(left)+' qalıb')+'</span>'
+      +'<span class="prog-r">Limit: '+fmt(c.budget)+'</span></div>':'');
+    list.appendChild(div);
+  });
+}
+
+function renderTxns(){
+  const list=document.getElementById('txn-list');list.innerHTML='';
+  if(!S.txns.length){list.innerHTML='<div class="empty"><div class="empty-icon">📝</div>Hələ heç bir əməliyyat yoxdur</div>';return;}
+  const sorted=[...S.txns].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  let lastDate='';
+  sorted.forEach(t=>{
+    const d=new Date(t.date).toDateString();
+    if(d!==lastDate){lastDate=d;const dg=document.createElement('div');dg.className='date-group';dg.textContent=fmtDate(t.date);list.appendChild(dg);}
+    const cat=S.cats.find(c=>c.id===t.catId);
+    const div=document.createElement('div');div.className='txn-item';
+    div.innerHTML='<div class="txn-icon" style="background:'+(cat?cat.color+'20':'#f5f5f5')+'">'+(cat?cat.emoji:'💰')+'</div>'
+      +'<div class="txn-info"><div class="txn-name">'+(t.desc||(cat?cat.name:'Digər'))+'</div>'
+      +'<div class="txn-cat">'+(cat?cat.name:'—')+'</div></div>'
+      +'<div class="txn-amt '+(t.type==='xərc'?'exp':'inc')+'">'+(t.type==='xərc'?'−':'+')+''+fmt(t.amount)+'</div>';
+    list.appendChild(div);
+  });
+}
+
+function renderIns(){
+  const txns=filterTxns('ay');
+  const exps=txns.filter(t=>t.type==='xərc'),incs=txns.filter(t=>t.type==='gəlir');
+  const totalExp=exps.reduce((s,t)=>s+t.amount,0),totalInc=incs.reduce((s,t)=>s+t.amount,0);
+  document.getElementById('ins-exp').textContent=fmt(totalExp);
+  document.getElementById('ins-inc').textContent=fmt(totalInc);
+  document.getElementById('ins-exp-cnt').textContent=exps.length+' əməliyyat';
+  document.getElementById('ins-inc-cnt').textContent=incs.length+' əməliyyat';
+  document.getElementById('ins-avg').textContent=fmt(totalExp/Math.max(1,new Date().getDate()));
+  const catTotals=S.cats.map(c=>({c,sp:catSpend(c.id,txns)})).filter(x=>x.sp>0).sort((a,b)=>b.sp-a.sp);
+  if(catTotals.length){const top=catTotals[0];document.getElementById('ins-top').textContent=top.c.emoji+' '+top.c.name;document.getElementById('ins-top-amt').textContent=fmt(top.sp);}
+  const bars=document.getElementById('ins-bars');bars.innerHTML='';
+  if(!catTotals.length){bars.innerHTML='<div style="font-size:11px;color:var(--muted)">Hələ məlumat yoxdur</div>';return;}
+  const max=catTotals[0].sp;
+  catTotals.forEach(({c,sp})=>{
+    const pct=Math.round(sp/max*100);
+    const row=document.createElement('div');row.className='bar-row';
+    row.innerHTML='<div class="bar-lbl">'+c.emoji+' '+c.name+'</div><div class="bar-bg"><div class="bar-fill" style="width:'+pct+'%;background:'+c.color+'"></div></div><div class="bar-val">'+fmt(sp)+'</div>';
+    bars.appendChild(row);
+  });
+}
+
+function nav(name,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('v-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>{if(b.textContent.trim()===btn.textContent.trim())b.classList.add('active');});
+  if(name==='home')renderHome();
+  if(name==='txns')renderTxns();
+  if(name==='ins')renderIns();
+}
+function setPeriod(p,btn){
+  S.period=p;document.querySelectorAll('.period-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHome();
+}
+function toggleEdit(){
+  S.editMode=!S.editMode;document.getElementById('edit-btn').textContent=S.editMode?'✅':'✏️';renderHome();
+}
+function deleteCat(id,e){
+  e.stopPropagation();S.cats=S.cats.filter(c=>c.id!==id);S.txns=S.txns.filter(t=>t.catId!==id);save();renderHome();toast('Kateqoriya silindi');
+}
+function openAddModal(){
+  const sel=document.getElementById('t-cat');
+  sel.innerHTML=S.cats.map(c=>'<option value="'+c.id+'">'+c.emoji+' '+c.name+'</option>').join('');
+  document.getElementById('t-amt').value='';document.getElementById('t-desc').value='';
+  setType('xərc');document.getElementById('m-add').classList.add('open');
+  setTimeout(()=>document.getElementById('t-amt').focus(),300);
+}
+function setType(t){
+  S.type=t;
+  document.getElementById('btn-exp').className='type-btn'+(t==='xərc'?' t-exp':'');
+  document.getElementById('btn-inc').className='type-btn'+(t==='gəlir'?' t-inc':'');
+}
+function saveTxn(){
+  const amt=parseFloat(document.getElementById('t-amt').value);if(!amt||amt<=0)return;
+  const desc=document.getElementById('t-desc').value.trim();
+  const catId=parseInt(document.getElementById('t-cat').value);
+  S.txns.push({id:Date.now(),amount:amt,desc,catId,type:S.type,date:new Date().toISOString()});
+  save();closeM('m-add');renderAll();toast(S.type==='xərc'?'Xərc qeyd edildi ✓':'Gəlir qeyd edildi ✓');
+}
+function openCatModal(){
+  document.getElementById('c-name').value='';document.getElementById('c-budget').value='';
+  S.emoji=EMOJIS[0];S.color=COLORS[0];
+  document.getElementById('emoji-grid').innerHTML=EMOJIS.map(e=>'<div class="emoji-opt'+(e===S.emoji?' sel':'')+'" onclick="selEmoji(\''+e+'\',this)">'+e+'</div>').join('');
+  document.getElementById('color-grid').innerHTML=COLORS.map(c=>'<div class="color-opt'+(c===S.color?' sel':'')+'" style="background:'+c+'" onclick="selColor(\''+c+'\',this)"></div>').join('');
+  document.getElementById('m-cat').classList.add('open');
+}
+function selEmoji(e,el){S.emoji=e;document.querySelectorAll('#emoji-grid .emoji-opt').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');}
+function selColor(c,el){S.color=c;document.querySelectorAll('#color-grid .color-opt').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');}
+function saveCat(){
+  const name=document.getElementById('c-name').value.trim();if(!name)return;
+  const budget=parseFloat(document.getElementById('c-budget').value)||0;
+  S.cats.push({id:Date.now(),name,emoji:S.emoji,color:S.color,budget});
+  save();closeM('m-cat');renderAll();toast('Kateqoriya yaradıldı ✓');
+}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+function saveSalary(){const v=parseFloat(document.getElementById('sal-inp').value);if(v>=0){S.salary=v;save();renderHome();toast('Gəlir saxlandı ✓');}}
+function exportData(){
+  const json=JSON.stringify({categories:S.cats,transactions:S.txns,exportDate:new Date().toISOString()},null,2);
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+  a.download='budce-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function clearAll(){if(confirm('Bütün məlumatlar silinəcək. Davam edirsiniz?')){S.txns=[];S.salary=0;save();renderAll();toast('Məlumatlar silindi');}}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+document.querySelectorAll('.overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
+try{if(window.Telegram&&window.Telegram.WebApp){const tg=window.Telegram.WebApp;tg.ready();tg.expand();}}catch(e){}
+load();
+document.getElementById('sal-inp').value=S.salary||'';
+renderAll();
+</script>
+</body>
+</html>
